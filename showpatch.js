@@ -1,4 +1,4 @@
-var showDiff = (function () {
+var showPatch = (function () {
 
     function isEmpty(obj) {
         return Object.keys(obj).length === 0;
@@ -167,12 +167,12 @@ var showDiff = (function () {
         return element;
     }
 
-    function showDiff(element, patch, original) {
+    function showPatch(element, patch, original) {
         var newpatch = formatPatch(patch, original),
             result = jsonpatch.apply_patch(original, newpatch);
         prettyPrint(element, result);
     };
 
-    return showDiff;
+    return showPatch;
 
 })();
