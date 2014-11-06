@@ -1,0 +1,17 @@
+div.item {
+    padding-left: 30px;
+}
+
+.key {
+    font-weight: bold;
+}
+.add, .add span {
+    background-color: #0f0;
+}
+.remove, .remove span {
+    text-decoration: line-through;
+    background-color: #faa;
+}
+.replace, .replace span {
+    background-color: yellow;
+}
