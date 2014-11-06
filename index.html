@@ -1,0 +1,71 @@
+<style type="text/css">
+
+  #result {
+      font-size: large;
+  }
+
+  div.item {
+      padding-left: 30px;
+  }
+
+  .key {
+      font-weight: bold;
+  }
+  .add, .add span {
+      background-color: #0f0;
+  }
+  .remove, .remove span {
+      text-decoration: line-through;
+      background-color: #faa;
+  }
+  .replace, .replace span {
+      background-color: yellow;
+  }
+
+</style>
+
+<tt id="result"></tt>
+
+<script src="jsonpatch.min.js"></script>
+<script src="showdiff.js"></script>
+
+<script type="text/javascript">
+
+  var input = {
+      "a": 2,
+      "b/c/d": [
+          1,
+          2,
+          3
+      ],
+      "c": {
+          "foo": "bar"
+      }
+  };
+
+  var patch = [
+      {
+          "op": "replace",
+          "path": "/a",
+          "value": 4
+      },
+      {
+          "op": "remove",
+          "path": "/c/foo"
+      },
+      {
+          "op": "replace",
+          "path": "/b~1c~1d/1",
+          "value": -2
+      },
+      {
+          "op": "add",
+          "path": "/b~1c~1d/3",
+          "value": 4
+      }
+  ];
+
+  var element = document.getElementById("result");
+  showDiff(element, patch, input);
+
+</script>
