@@ -118,7 +118,6 @@ var showPatch = (function () {
         return new_patch2;
     }
 
-
     // output DOM representation of patched object
     function prettyPrint(element, obj) {
         element = element || document.createElement("span");
@@ -153,6 +152,7 @@ var showPatch = (function () {
                 key_el.innerHTML = key + ": ";
                 item_el.appendChild(wrap_el);
                 wrap_el.appendChild(key_el);
+
                 var res = prettyPrint(wrap_el, obj[key]);
                 if (res.classList) {
                     if(res.classList.contains("add"))
@@ -178,12 +178,10 @@ var showPatch = (function () {
         return element;
     }
 
-    function showPatch(element, patch, original) {
-        var newpatch = formatPatch(patch, original),
-            result = jsonpatch.apply_patch(original, newpatch);
+    return function (element, patch, original) {
+        var formatted_patch = formatPatch(patch, original),
+            result = jsonpatch.apply_patch(original, formatted_patch);
         prettyPrint(element, result);
     };
-
-    return showPatch;
 
 })();
