@@ -4,6 +4,10 @@ var showPatch = (function () {
         return Object.keys(obj).length === 0;
     }
 
+    function isPointerToArray(path, data) {
+        return (new jsonpatch.JSONPointer(path)).get(data) instanceof Array;
+    }
+
     // takes a JSON patch and an original object, and produces a new patch
     // tailored for producing output
     function formatPatch(patch, orig) {
@@ -11,16 +15,15 @@ var showPatch = (function () {
         // First go through the patch and find any array operations.
         // If there are consecutive removes on the same array, the indices
         // must be adjusted since we won't remove anything.
-        var new_patch = [], paths = {}, index, p2, splitpath, path;
+        var new_patch = [], paths = {}, index, p2, splitpath, path, parent;
         patch.forEach(function (p, i) {
             switch (p.op) {
             case "add":
-                splitpath = p.path.split("/"),
-                index = splitpath.slice(-1)[0];
+                splitpath = p.path.split("/");
+                path = splitpath.slice(0, -1).join("/") || "/";
                 p2 = {op: p.op, path: p.path, value: p.value};
-                if (!isNaN(index)) {
-                    index = parseInt(index);
-                    path = p.path.split("/").slice(0, -1).join("/") || "/";
+                if (isPointerToArray(path, orig)) {
+                    index = parseInt(splitpath.slice(-1));
                     if (!paths[path])
                         paths[path] = [];
                     paths[path].push(p2);
@@ -28,12 +31,11 @@ var showPatch = (function () {
                 new_patch.push(p2);
                 break;
             case "remove":
-                splitpath = p.path.split("/"),
-                index = splitpath.slice(-1)[0];
+                splitpath = p.path.split("/");
+                path = splitpath.slice(0, -1).join("/") || "/";
                 p2 = {op: p.op, path: p.path};
-                if (!isNaN(index)) {
-                    index = parseInt(index);
-                    path = p.path.split("/").slice(0, -1).join("/") || "/";
+                if (isPointerToArray(path, orig)) {
+                    index = parseInt(splitpath.slice(-1));
                     if (!paths[path])
                         paths[path] = [];
                     paths[path].push(p2);
@@ -46,22 +48,21 @@ var showPatch = (function () {
                     ptr = new jsonpatch.JSONPointer(p.from),
                     value = ptr.get(orig),
                     add = {op: "add", path: p.path, value: value};
-                new_patch.push(remove);
-                new_patch.push(add);
+                new_patch.push(remove, add);
                 break;
             case "replace":
                 p2 = {op: p.op, path: p.path, value: p.value};
                 new_patch.push(p2);
+                break;
             }
             // TODO: cover "copy" operation too
         });
 
-        // Then go through the array patches and adjust indices
+        // Then go through the array patches found and adjust indices
         // Not sure this is really correct for all cases...
         Object.keys(paths).forEach(function (path) {
             var count = 0;
             paths[path].forEach(function (p) {
-                console.log(p);
                 var splitpath = p.path.split("/"),
                     index = splitpath.slice(-1)[0],
                     i = parseInt(index);
@@ -78,29 +79,39 @@ var showPatch = (function () {
             var newp = {}, ptr, value, old_value;
             switch (p.op) {
             case "add":
-                newp.op = "add";
-                newp.path = p.path;
-                newp.value = '<span class="patch add">' + prettyPrint(null, p.value).innerHTML + '</span>';
+                newp = {
+                    op: "add", path: p.path,
+                    value: ('<span class="patch add">' +
+                            prettyPrint(null, p.value).innerHTML + '</span>')
+                };
                 break;
             case "remove":
-                newp.op = "replace";
-                newp.path = p.path;
                 ptr = new jsonpatch.JSONPointer(p.path);
                 value = ptr.get(orig);
-                newp.value = '<span class="patch remove">' + prettyPrint(null, value).innerHTML + '</span>';
+                newp = {
+                    op: "replace",
+                    path: p.path,
+                    value: ('<span class="patch remove">' +
+                            prettyPrint(null, value).innerHTML + '</span>')
+                };
                 break;
             case "replace":
-                newp.op = "replace";
-                newp.path = p.path;
                 ptr = new jsonpatch.JSONPointer(p.path);
                 old_value = ptr.get(orig);
-                newp.value = ('<span class="patch replace">' +
-                              '<span class="remove">' + prettyPrint(null, old_value).innerHTML + "</span> &#8594; " +
-                              '<span class="add">' + prettyPrint(null, p.value).innerHTML + '</span>');
+                newp = {
+                    op: "replace",
+                    path: p.path,
+                    value: ('<span class="patch replace">' +
+                            '<span class="remove">' +
+                            prettyPrint(null, old_value).innerHTML +
+                            '</span> &#8594; <span class="add">' +
+                            prettyPrint(null, p.value).innerHTML + '</span>')
+                };
             }
             if (!isEmpty(newp)) {
                 new_patch2.push(newp);
-                // need to update the original each time so that later pointers are correct
+                // need to update the original each time so that later
+                // pointers are correct
                 orig = jsonpatch.apply_patch(orig, [newp]);
             }
         });
