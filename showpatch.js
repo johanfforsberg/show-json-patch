@@ -178,7 +178,8 @@ var showPatch = (function () {
         return element;
     }
 
-    return function (element, patch, original) {
+    return function (element, original, patch) {
+        patch = patch || [];
         var formatted_patch = formatPatch(patch, original),
             result = jsonpatch.apply_patch(original, formatted_patch);
         prettyPrint(element, result);

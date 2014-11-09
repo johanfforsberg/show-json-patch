@@ -1,6 +1,32 @@
 <link rel="stylesheet" href="style.css"></style>
 
-<tt id="result"></tt>
+<style type="text/css">
+  table {
+    width: 100%;
+  }
+
+  td {
+      width: 33%;
+      vertical-align: top;
+  }
+</style>
+
+<table>
+  <tr>
+    <td>
+      <h3>Patch</h3>
+      <tt id="patch"></tt>
+    </td>
+    <td>
+      <h3>Original</h3>
+      <tt id="original"></tt>
+    </td>
+    <td>
+      <h3>Result</h3>
+      <tt id="result"></tt>
+    </td>
+  </tr>
+</table>
 
 <script src="jsonpatch.min.js"></script>
 <script src="showpatch.js"></script>
@@ -26,7 +52,7 @@
       },
       {
           "op": "remove",
-          "path": "/c/foo"
+          "path": "/c"
       },
       {
           "op": "replace",
@@ -40,7 +66,8 @@
       }
   ];
 
-  var element = document.getElementById("result");
-  showPatch(element, patch, input);
+  showPatch(document.getElementById("original"), input);
+  showPatch(document.getElementById("patch"), patch);
+  showPatch(document.getElementById("result"), input, patch);
 
 </script>
