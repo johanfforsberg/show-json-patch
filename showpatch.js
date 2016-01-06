@@ -23,7 +23,6 @@ var showPatch = (function () {
                 path = splitpath.slice(0, -1).join("/") || "/";
                 p2 = {op: p.op, path: p.path, value: p.value};
                 if (isPointerToArray(path, orig)) {
-                    index = parseInt(splitpath.slice(-1));
                     if (!paths[path])
                         paths[path] = [];
                     paths[path].push(p2);
@@ -35,7 +34,6 @@ var showPatch = (function () {
                 path = splitpath.slice(0, -1).join("/") || "/";
                 p2 = {op: p.op, path: p.path};
                 if (isPointerToArray(path, orig)) {
-                    index = parseInt(splitpath.slice(-1));
                     if (!paths[path])
                         paths[path] = [];
                     paths[path].push(p2);
@@ -58,17 +56,34 @@ var showPatch = (function () {
             // TODO: cover "copy" operation too
         });
 
-        // Then go through the array patches found and adjust indices
-        // Not sure this is really correct for all cases...
+        // Then go through the array related patches and adjust indices
+        // (Not sure this is really correct for all cases...)
         Object.keys(paths).forEach(function (path) {
-            var count = 0;
+            var removals = [], additions = [];
             paths[path].forEach(function (p) {
                 var splitpath = p.path.split("/"),
                     index = splitpath.slice(-1)[0],
                     i = parseInt(index);
-                p.path = splitpath.slice(0, -1).join("/") + "/" + (i + count);
-                if (p.op == "remove")
-                    count++;
+                var adjustment = 0;
+                // The idea here is to only take into account any operations on the
+                // part before the index this operation works at. I *think* that's
+                // how JSON-patch is supposed to work, though I didn't really find
+                // documentation that details this.
+                removals.forEach(function (r) {
+                    if (r <= i + adjustment)
+                        adjustment++;
+                });
+                additions.forEach(function (r) {
+                    if (r <= i + adjustment)
+                        adjustment++;
+                });                
+                p.path = splitpath.slice(0, -1).join("/") + "/" + (i + adjustment);
+                if (p.op == "remove") {
+                    removals.push(i);
+                }                
+                if (p.op == "add") {
+                    additions.push(i);
+                }                
             });
         });
 
@@ -170,7 +185,7 @@ var showPatch = (function () {
         } else {
             var tmp = document.createElement("span");
             tmp.innerHTML = obj;
-            if (tmp.firstChild.classList)
+            if (tmp.firstChild && tmp.firstChild.classList)
                 tmp = tmp.firstChild;
             element.appendChild(tmp);
             return tmp;

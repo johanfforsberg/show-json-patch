@@ -1,17 +1,26 @@
-div.item {
+/* indentation */
+div.item {  
     padding-left: 30px;
 }
 
+/* object keys */
 .key {
     font-weight: bold;
 }
+
+/* add operation */
 .add, .add span {
     background-color: #0f0;
 }
+
+/* remove operation */
 .remove, .remove span {
     text-decoration: line-through;
     background-color: #faa;
 }
+
+/* replace operation */
 .replace, .replace span {
     background-color: yellow;
 }
+
